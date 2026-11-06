@@ -1,3 +1,11 @@
+// Standard Georgian keyboard layout: the Latin key each letter sits on ("⇧" = shifted).
+// If your phone keyboard differs, fix it here.
+const KEYS = {
+  ა: 'A', ბ: 'B', გ: 'G', დ: 'D', ე: 'E', ვ: 'V', ზ: 'Z', თ: '⇧T', ი: 'I', კ: 'K', ლ: 'L', მ: 'M',
+  ნ: 'N', ო: 'O', პ: 'P', ჟ: '⇧J', რ: 'R', ს: 'S', ტ: 'T', უ: 'U', ფ: 'F', ქ: 'Q', ღ: '⇧R', ყ: 'Y',
+  შ: '⇧S', ჩ: '⇧C', ც: 'C', ძ: '⇧Z', წ: 'W', ჭ: '⇧W', ხ: 'X', ჯ: 'J', ჰ: 'H',
+};
+
 // Georgian alphabet (Mkhedruli). `sound` is the romanisation used in quizzes.
 export const ALPHABET = [
   ['ა', 'a', 'ani'], ['ბ', 'b', 'bani'], ['გ', 'g', 'gani'], ['დ', 'd', 'doni'],
@@ -9,7 +17,7 @@ export const ALPHABET = [
   ['შ', 'sh', 'shini'], ['ჩ', 'ch', 'chini'], ['ც', 'ts', 'tsani'], ['ძ', 'dz', 'dzili'],
   ['წ', "ts'", "ts'ili"], ['ჭ', "ch'", "ch'ari"], ['ხ', 'kh', 'khani'], ['ჯ', 'j', 'jani'],
   ['ჰ', 'h', 'hae'],
-].map(([char, sound, name]) => ({ char, sound, name }));
+].map(([char, sound, name]) => ({ char, sound, name, key: KEYS[char] }));
 
 // Starter words so the app isn't empty. Delete or edit them in the Words tab.
 export const STARTER_WORDS = [

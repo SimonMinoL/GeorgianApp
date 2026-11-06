@@ -1,4 +1,4 @@
-import { state } from './storage.js';
+﻿import { state } from './storage.js';
 import { ALPHABET } from './data.js';
 import { getProgress } from './leitner.js';
 import { FREQ_WORDS } from './frequency.js';
@@ -19,7 +19,7 @@ export function render(root) {
   })).filter(r => r.c + r.w > 0);
   const weakest = [...wordRows].sort((a, b) => a.acc - b.acc || b.w - a.w).slice(0, 8);
 
-  const letters = ALPHABET.flatMap(l => ['ch-sound', 'sound-ch'].map(dir => ({ l, ...getProgress(`a:${l.char}:${dir}`) })))
+  const letters = ALPHABET.flatMap(l => ['ch-sound', 'sound-ch', 'sound-type'].map(dir => ({ l, ...getProgress(`a:${l.char}:${dir}`) })))
     .reduce((m, r) => { const e = (m[r.l.char] ||= { l: r.l, c: 0, w: 0 }); e.c += r.c; e.w += r.w; return m; }, {});
   const letterRows = Object.values(letters).filter(r => r.c + r.w > 0).sort((a, b) => pct(a.c, a.w) - pct(b.c, b.w)).slice(0, 8);
 

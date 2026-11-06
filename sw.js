@@ -1,5 +1,5 @@
 // Bump VERSION whenever you change files so phones pick up the update.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const FILES = [
   './', './index.html', './manifest.webmanifest', './icon.svg', './css/style.css',
   './js/app.js', './js/util.js', './js/data.js', './js/storage.js', './js/leitner.js', './js/frequency.js',

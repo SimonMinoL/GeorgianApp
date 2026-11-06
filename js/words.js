@@ -32,7 +32,7 @@ function renderList(root) {
     const words = state.words.filter(w => !q || [w.ka, w.roman, w.en, w.category].some(f => (f || '').toLowerCase().includes(q)));
     $('#list', root).innerHTML = words.map(w => `
       <div class="list-item row between" data-id="${w.id}">
-        <div><span class="ka">${esc(w.ka)}</span> <span class="muted">${esc(w.roman)}</span>
+        <div><span class="ka">${esc(w.ka)}</span> <span class="muted">${esc(w.roman)}</span>${w.fromFrequency ? ' <span class="muted">· from frequency list</span>' : ''}
           <div>${esc(w.en)} ${w.category ? `<span class="muted">· ${esc(w.category)}</span>` : ''}</div></div>
         <button class="btn secondary small" data-edit="${w.id}">Edit</button>
       </div>`).join('') || '<span class="muted">Nothing here yet.</span>';

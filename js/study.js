@@ -1,6 +1,6 @@
-import { state, categories } from './storage.js';
+import { state, save, categories } from './storage.js';
 import { ALPHABET } from './data.js';
-import { pickSmart, pickRandom, pickFrequency, record } from './leitner.js';
+import { pickSmart, pickRandom, pickFrequency, record, getProgress } from './leitner.js';
 import { FREQ_WORDS, freqCategories } from './frequency.js';
 import { isCorrect, alternatives } from './check.js';
 import { esc, $, $$, shuffle } from './util.js';
@@ -12,9 +12,10 @@ const WORD_MODES = [
   ['en-ka-hard', 'English → Georgian (hard)', 'See only English, type in Georgian'],
 ];
 const ALPHA_MODES = [
-  ['ch-sound', 'Letter → sound', 'See the letter, pick its sound'],
-  ['sound-ch', 'Sound → letter', 'See the sound, pick the letter'],
-  ['mixed', 'Mixed', 'Both directions'],
+  ['ch-sound', 'Letter → sound (easy)', 'See the letter, pick its sound'],
+  ['sound-ch', 'Sound → letter (easy)', 'See the sound, pick the letter'],
+  ['mixed', 'Mixed (easy)', 'Both directions, multiple choice'],
+  ['sound-type', 'Sound → letter (hard)', 'See the sound, type the letter on your Georgian keyboard'],
 ];
 
 const METHOD_LABEL = { random: 'Random', smart: 'Smart', frequency: 'Frequency' };
@@ -143,6 +144,7 @@ function questionWord(root, card) {
 
 function questionAlphabet(root, card) {
   const l = card.letter;
+  if (card.dir === 'sound-type') return questionAlphabetTyped(root, card);
   const toSound = card.dir === 'ch-sound';
   $('#prompt', root).innerHTML = toSound
     ? `<div class="tag">Which sound?</div><div class="big">${esc(l.char)}</div>`
@@ -167,6 +169,7 @@ function questionAlphabet(root, card) {
       <div class="feedback ${ok ? 'ok' : 'bad'}">
         <b>${ok ? 'Correct!' : 'Not quite'}</b>
         <div><span class="ka">${esc(l.char)}</span> = ${esc(l.sound)} <span class="muted">(${esc(l.name)})</span></div>
+        <div class="muted">Keyboard key: ${esc(l.key)}</div>
         ${ex ? `<div class="muted">e.g. ${esc(ex)}</div>` : ''}
       </div>
       <button class="btn block" id="nextBtn">Next</button>`);
@@ -174,8 +177,43 @@ function questionAlphabet(root, card) {
   });
 }
 
+function questionAlphabetTyped(root, card) {
+  const l = card.letter;
+  $('#prompt', root).innerHTML = `<div class="tag">Type the letter</div><div class="big text">${esc(l.sound)}</div>`;
+  $('#answer', root).innerHTML = `
+    <input id="input" lang="ka" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ა" style="font-size:1.5rem;text-align:center">
+    <button class="btn block" id="check">Check</button>`;
+  const input = $('#input', root);
+  input.focus();
+  const submit = () => {
+    if (session.answered) return next(root);
+    session.answered = true;
+    const ok = input.value.trim().normalize('NFC') === l.char;
+    finish(root, card, ok);
+    input.disabled = true;
+    const ex = state.alphabetExamples[l.char];
+    $('#answer', root).insertAdjacentHTML('afterbegin', `
+      <div class="feedback ${ok ? 'ok' : 'bad'}">
+        <b>${ok ? 'Correct!' : 'Not quite'}</b>
+        <div><span class="ka">${esc(l.char)}</span> = ${esc(l.sound)} <span class="muted">(${esc(l.name)})</span></div>
+        <div class="muted">Keyboard key: ${esc(l.key)}</div>
+        ${ex ? `<div class="muted">e.g. ${esc(ex)}</div>` : ''}
+      </div>`);
+    $('#check', root).textContent = 'Next';
+    $('#check', root).focus();
+  };
+  $('#check', root).onclick = submit;
+  input.onkeydown = e => { if (e.key === 'Enter') submit(); };
+}
+
 function finish(root, card, ok) {
   record(card.key, ok);
+  const w = card.word;
+  if (ok && w && w.frequency && getProgress(card.key).box >= 4 && !state.words.some(x => x.id === w.id)) {
+    // Same id as the built-in word, so its progress carries over to the copy.
+    state.words.unshift({ id: w.id, ka: w.ka, roman: w.roman, en: w.en, category: w.category, sentence: w.sentence, sentenceEn: w.sentenceEn, fromFrequency: true });
+    save();
+  }
   ok ? session.right++ : session.wrong++;
   $('.row.between .muted', root).innerHTML =
     `${session.right} ✓ &nbsp; ${session.wrong} ✗ &nbsp; ${METHOD_LABEL[session.method]}`;
