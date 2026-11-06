@@ -21,3 +21,5 @@ $$('#nav button').forEach(b => b.onclick = () => show(b.dataset.view));
 show(current);
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// Ask the browser not to evict saved progress when storage is low.
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});

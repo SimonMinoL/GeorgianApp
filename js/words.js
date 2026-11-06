@@ -1,6 +1,7 @@
 import { state, save, categories } from './storage.js';
 import { ALPHABET } from './data.js';
 import { esc, $, $$, uid } from './util.js';
+import { freqCategories } from './frequency.js';
 
 let tab = 'words';
 let editing = null; // null = list, 'new' or word id = form
@@ -45,6 +46,7 @@ function renderForm(root) {
   const isNew = editing === 'new';
   const w = isNew ? { ka: '', roman: '', en: '', category: '', sentence: '', sentenceEn: '' } : state.words.find(x => x.id === editing);
   const f = (id, label, val, extra = '') => `<label>${label}</label><input id="${id}" value="${esc(val)}" autocomplete="off" ${extra}>`;
+  const allCats = [...new Set([...categories(), ...freqCategories()])].sort();
   root.innerHTML = `
     <h1>${isNew ? 'Add word' : 'Edit word'}</h1>
     <div class="card">
@@ -52,8 +54,11 @@ function renderForm(root) {
       ${f('roman', 'Pronunciation (English letters) *', w.roman, 'autocapitalize="off"')}
       ${f('en', 'English translation * (use / for alternatives)', w.en)}
       <label>Category</label>
-      <input id="category" list="cats" value="${esc(w.category)}" autocomplete="off">
-      <datalist id="cats">${categories().map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      <div class="row wrap" id="catpick" style="margin-bottom:10px">
+        ${allCats.map(c => `<label class="chip ${c === w.category ? 'on' : ''}" style="margin:0"><input type="radio" name="cat" value="${esc(c)}" ${c === w.category ? 'checked' : ''} style="display:none">${esc(c)}</label>`).join('')}
+      </div>
+      <input id="newcat" placeholder="…or type a new category" autocomplete="off">
+      <input type="hidden" id="category" value="${esc(w.category)}">
       ${f('sentence', 'Example sentence (Georgian)', w.sentence, 'lang="ka"')}
       ${f('sentenceEn', 'Sentence translation', w.sentenceEn)}
       <p class="muted" id="err"></p>
@@ -64,6 +69,15 @@ function renderForm(root) {
       ${isNew ? '' : '<button class="btn danger block" id="del" style="margin-top:12px">Delete word</button>'}
     </div>`;
   const val = id => $('#' + id, root).value.trim();
+  $$('#catpick input', root).forEach(r => r.onchange = () => {
+    $('#category', root).value = r.value;
+    $('#newcat', root).value = '';
+    $$('#catpick .chip', root).forEach(c => c.classList.toggle('on', c.contains(r) && r.checked));
+  });
+  $('#newcat', root).oninput = () => {
+    $$('#catpick input', root).forEach(r => { r.checked = false; r.parentElement.classList.remove('on'); });
+    $('#category', root).value = $('#newcat', root).value;
+  };
   $('#cancel', root).onclick = () => { editing = null; render(root); };
   $('#save', root).onclick = () => {
     const data = { ka: val('ka'), roman: val('roman'), en: val('en'), category: val('category').toLowerCase(), sentence: val('sentence'), sentenceEn: val('sentenceEn') };

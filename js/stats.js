@@ -1,6 +1,7 @@
 import { state } from './storage.js';
 import { ALPHABET } from './data.js';
 import { getProgress } from './leitner.js';
+import { FREQ_WORDS } from './frequency.js';
 import { esc, pct, today } from './util.js';
 
 export function render(root) {
@@ -12,7 +13,7 @@ export function render(root) {
   const boxes = [1, 2, 3, 4, 5].map(b => entries.filter(([, p]) => p.box === b).length);
   const maxBox = Math.max(1, ...boxes);
 
-  const wordRows = state.words.flatMap(w => ['ka-en', 'en-ka'].map(dir => {
+  const wordRows = [...state.words, ...FREQ_WORDS].flatMap(w => ['ka-en', 'en-ka'].map(dir => {
     const p = getProgress(`w:${w.id}:${dir}`);
     return { label: dir === 'ka-en' ? `${w.ka} → ${w.en}` : `${w.en} → ${w.ka}`, ...p, acc: pct(p.c, p.w) };
   })).filter(r => r.c + r.w > 0);

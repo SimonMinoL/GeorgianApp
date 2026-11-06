@@ -1,6 +1,7 @@
 import { state, categories } from './storage.js';
 import { ALPHABET } from './data.js';
-import { pickSmart, pickRandom, record } from './leitner.js';
+import { pickSmart, pickRandom, pickFrequency, record } from './leitner.js';
+import { FREQ_WORDS, freqCategories } from './frequency.js';
 import { isCorrect, alternatives } from './check.js';
 import { esc, $, $$, shuffle } from './util.js';
 
@@ -16,6 +17,7 @@ const ALPHA_MODES = [
   ['mixed', 'Mixed', 'Both directions'],
 ];
 
+const METHOD_LABEL = { random: 'Random', smart: 'Smart', frequency: 'Frequency' };
 const setup = { deck: 'words', mode: 'ka-en-easy', method: 'random', cats: new Set() };
 let session = null;
 
@@ -42,6 +44,7 @@ function renderSetup(root) {
       <button class="option ${setup.method === 'random' ? 'on' : ''}" data-method="random">Random</button>
       <button class="option ${setup.method === 'smart' ? 'on' : ''}" data-method="smart">Smart (Leitner)</button>
     </div>
+    ${setup.deck === 'words' ? `<button class="option ${setup.method === 'frequency' ? 'on' : ''}" data-method="frequency" style="margin-top:8px">Frequency list<small>Most common spoken words first, unlocking as you learn (built-in list)</small></button>` : ''}
     ${setup.deck === 'words' ? `
       <h2>Categories <span class="muted" style="text-transform:none">(none selected = all)</span></h2>
       <div class="row wrap">${cats.map(c => `<button class="chip ${setup.cats.has(c) ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('') || '<span class="muted">No categories yet</span>'}</div>` : ''}
@@ -50,7 +53,7 @@ function renderSetup(root) {
 
   $$('[data-deck]', root).forEach(b => b.onclick = () => { setup.deck = b.dataset.deck; renderSetup(root); });
   $$('[data-mode]', root).forEach(b => b.onclick = () => { setup.mode = b.dataset.mode; renderSetup(root); });
-  $$('[data-method]', root).forEach(b => b.onclick = () => { setup.method = b.dataset.method; renderSetup(root); });
+  $$('[data-method]', root).forEach(b => b.onclick = () => { if ((b.dataset.method === 'frequency') !== (setup.method === 'frequency')) setup.cats.clear(); setup.method = b.dataset.method; renderSetup(root); });
   $$('[data-cat]', root).forEach(b => b.onclick = () => {
     setup.cats.has(b.dataset.cat) ? setup.cats.delete(b.dataset.cat) : setup.cats.add(b.dataset.cat);
     renderSetup(root);
@@ -58,7 +61,7 @@ function renderSetup(root) {
   $('#start', root).onclick = () => {
     const cards = buildCards();
     if (!cards.length) { $('#err', root).textContent = 'No cards match. Add words or change categories.'; return; }
-    session = { cards, method: setup.method, deck: setup.deck, mode: setup.mode, right: 0, wrong: 0, last: null, current: null };
+    session = { cards, method: setup.deck === 'alphabet' && setup.method === 'frequency' ? 'random' : setup.method, deck: setup.deck, mode: setup.mode, right: 0, wrong: 0, last: null, current: null };
     next(root);
   };
 }
@@ -69,7 +72,8 @@ function buildCards() {
     const dirs = setup.mode === 'mixed' ? ['ch-sound', 'sound-ch'] : [setup.mode];
     return ALPHABET.flatMap(l => dirs.map(dir => ({ key: `a:${l.char}:${dir}`, kind: 'alphabet', dir, letter: l })));
   }
-  const words = state.words.filter(w => !setup.cats.size || setup.cats.has(w.category));
+  const source = setup.method === 'frequency' ? FREQ_WORDS : state.words;
+  const words = source.filter(w => !setup.cats.size || setup.cats.has(w.category));
   const easy = setup.mode.endsWith('easy');
   const dir = setup.mode.startsWith('ka') ? 'ka-en' : 'en-ka';
   // Progress is tracked per direction (not per difficulty) so easy/hard share stats.
@@ -77,7 +81,7 @@ function buildCards() {
 }
 
 function next(root) {
-  const pick = session.method === 'smart' ? pickSmart : pickRandom;
+  const pick = { smart: pickSmart, frequency: pickFrequency }[session.method] || pickRandom;
   session.current = pick(session.cards, session.last);
   session.last = session.current.key;
   session.answered = false;
@@ -91,7 +95,7 @@ function renderQuestion(root) {
   root.innerHTML = `
     <div class="row between" style="margin-bottom:12px">
       <button class="btn secondary small" id="end">End</button>
-      <span class="muted">${session.right} ✓ &nbsp; ${session.wrong} ✗ &nbsp; ${session.method === 'smart' ? 'Smart' : 'Random'}</span>
+      <span class="muted">${session.right} ✓ &nbsp; ${session.wrong} ✗ &nbsp; ${METHOD_LABEL[session.method]}</span>
     </div>
     <div class="card"><div class="prompt" id="prompt"></div></div>
     <div id="answer"></div>`;
@@ -105,8 +109,8 @@ function questionWord(root, card) {
   const toEnglish = card.dir === 'ka-en';
   const answer = toEnglish ? w.en : w.ka;
   $('#prompt', root).innerHTML = toEnglish
-    ? `<div class="tag">Translate to English</div><div class="big text">${esc(w.ka)}</div>${card.easy ? `<div class="hint">${esc(w.roman)}</div>` : ''}`
-    : `<div class="tag">Type in Georgian</div><div class="big text">${esc(w.en)}</div>${card.easy ? `<div class="hint">${esc(w.roman)}</div>` : ''}`;
+    ? `<div class="tag">Translate to English${w.hint ? ' · ' + esc(w.hint) : ''}</div><div class="big text">${esc(w.ka)}</div>${card.easy ? `<div class="hint">${esc(w.roman)}</div>` : ''}`
+    : `<div class="tag">Type in Georgian${w.hint ? ' · ' + esc(w.hint) : ''}</div><div class="big text">${esc(w.en)}</div>${card.easy ? `<div class="hint">${esc(w.roman)}</div>` : ''}`;
 
   $('#answer', root).innerHTML = `
     <input id="input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" ${toEnglish ? '' : 'lang="ka"'} placeholder="${toEnglish ? 'English…' : 'ქართული…'}">
@@ -174,7 +178,7 @@ function finish(root, card, ok) {
   record(card.key, ok);
   ok ? session.right++ : session.wrong++;
   $('.row.between .muted', root).innerHTML =
-    `${session.right} ✓ &nbsp; ${session.wrong} ✗ &nbsp; ${session.method === 'smart' ? 'Smart' : 'Random'}`;
+    `${session.right} ✓ &nbsp; ${session.wrong} ✗ &nbsp; ${METHOD_LABEL[session.method]}`;
 }
 
 function endSession(root) {

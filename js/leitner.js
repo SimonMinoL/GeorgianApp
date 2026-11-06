@@ -39,6 +39,15 @@ export function pickSmart(cards, lastKey) {
   return rand(scored.slice(0, Math.min(3, scored.length))).card;
 }
 
+// Frequency method: work through the list in rank order. Only a window of the most frequent
+// not-yet-mastered cards (box < 4) is active; as you master them, the next ones unlock.
+const WINDOW = 10;
+export function pickFrequency(cards, lastKey) {
+  const sorted = [...cards].sort((a, b) => a.word.rank - b.word.rank);
+  const active = sorted.filter(c => getProgress(c.key).box < 4).slice(0, WINDOW);
+  return pickSmart(active.length ? active : sorted, lastKey);
+}
+
 export function pickRandom(cards, lastKey) {
   const pool = cards.length > 1 ? cards.filter(c => c.key !== lastKey) : cards;
   return rand(pool);
