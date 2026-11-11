@@ -13,9 +13,9 @@ export const ALPHABET = [
   ['ი', 'i', 'ini'], ['კ', "k'", "k'ani"], ['ლ', 'l', 'lasi'], ['მ', 'm', 'mani'],
   ['ნ', 'n', 'nari'], ['ო', 'o', 'oni'], ['პ', "p'", "p'ari"], ['ჟ', 'zh', 'zhani'],
   ['რ', 'r', 'rae'], ['ს', 's', 'sani'], ['ტ', "t'", "t'ari"], ['უ', 'u', 'uni'],
-  ['ფ', 'p', 'pari'], ['ქ', 'k', 'kani'], ['ღ', 'gh', 'ghani'], ['ყ', "q'", "q'ari"],
+  ['ფ', 'p', 'pari'], ['ქ', 'q', 'qari'], ['ღ', 'gh', 'ghani'], ['ყ', "k", "kava"],
   ['შ', 'sh', 'shini'], ['ჩ', 'ch', 'chini'], ['ც', 'ts', 'tsani'], ['ძ', 'dz', 'dzili'],
-  ['წ', "ts'", "ts'ili"], ['ჭ', "ch'", "ch'ari"], ['ხ', 'kh', 'khani'], ['ჯ', 'j', 'jani'],
+  ['წ', "ts'", "ts'ili"], ['ჭ', "tch", "tchari"], ['ხ', 'kh', 'khani'], ['ჯ', 'j', 'jani'],
   ['ჰ', 'h', 'hae'],
 ].map(([char, sound, name]) => ({ char, sound, name, key: KEYS[char] }));
 
