@@ -19,16 +19,28 @@ export const ALPHABET = [
   ['ჰ', 'h', 'hae'],
 ].map(([char, sound, name]) => ({ char, sound, name, key: KEYS[char] }));
 
-// Starter words so the app isn't empty. Delete or edit them in the Words tab.
+// Base words (your own list). Ids come from your backup so existing progress keeps matching.
+// New installs start with these; edit or delete them in the Words tab.
 export const STARTER_WORDS = [
-  ['გამარჯობა', 'gamarjoba', 'hello', 'greetings'],
-  ['გმადლობთ', 'gmadlobt', 'thank you', 'greetings'],
-  ['დიახ', 'diakh', 'yes', 'basics'],
-  ['არა', 'ara', 'no', 'basics'],
-  ['წყალი', "ts'q'ali", 'water', 'food'],
-  ['პური', "p'uri", 'bread', 'food'],
-  ['დედა', 'deda', 'mother', 'family'],
-  ['მამა', 'mama', 'father', 'family'],
-  ['კარგი', "k'argi", 'good', 'basics'],
-  ['ბოდიში', 'bodishi', 'sorry / excuse me', 'greetings'],
+  ['mw59n7o061gc', 'გმადლობთ', 'gmadlobt', 'thank you', 'greetings'],
+  ['mw59n7o0lksb', 'ბოდიში', 'bodishi', 'sorry / excuse me', 'greetings'],
+  ['mw59n7o03pf7', 'დიახ', 'diakh', 'yes', 'basics'],
+  ['mw59n7o0ldil', 'არა', 'ara', 'no', 'basics'],
+  ['mw59n7o02u4q', 'კარგი', "k'argi", 'good', 'basics'],
+  ['mw6ltd39xdxa', 'ვიცი', 'vitsi', 'I know', 'basics'],
+  ['mw59n7o0kcrl', 'წყალი', "ts'q'ali", 'water', 'food'],
+  ['mw59n7o0s48s', 'პური', "p'uri", 'bread', 'food'],
+  ['mw59n7o00qpv', 'დედა', 'deda', 'mother', 'family'],
+  ['mw59n7o0a8wq', 'მამა', 'mama', 'father', 'family'],
+  ['mw59n7o0z9nc', 'გამარჯობა', 'gamarjoba', 'hello', 'greetings'],
 ];
+
+// Example word per letter (shown after answering an alphabet card).
+export const DEFAULT_EXAMPLES = {
+  ა: 'ara', ბ: 'bali', გ: 'gemi', დ: 'deda', ე: 'ena (tongue/language)', ვ: 'var', ზ: 'zoma (size)',
+  თ: 'tbili (soft t)', ი: 'iremi', კ: 'kata (hard k)', ლ: 'lomi', მ: 'marili (salt)', ნ: 'nikapi', ო: 'ori',
+  პ: 'puri (normal p)', ჟ: 'zhirafi (jirafa / jirapi)', რ: 'rogor', ს: 'saati', ტ: 'torti (normal t)', უ: 'uto',
+  ფ: 'piso', ქ: 'qari (wind/soft k)', ღ: 'Ghomi (French r)', ყ: "K'ava", შ: 'Shen (you)', ჩ: 'chai',
+  ც: 'tsetskhli (fire)', ძ: 'dzneli (difficult)', წ: "ts'eli (year / spine)", ჭ: 'Tchama (eat)',
+  ხ: 'khe (tree)', ჯ: 'jdoma (sit)', ჰ: 'haeri (air) h in hello',
+};

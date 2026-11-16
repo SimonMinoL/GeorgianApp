@@ -51,7 +51,7 @@ function renderForm(root) {
     <h1>${isNew ? 'Add word' : 'Edit word'}</h1>
     <div class="card">
       ${f('ka', 'Georgian *', w.ka, 'lang="ka"')}
-      ${f('roman', 'Pronunciation (English letters) *', w.roman, 'autocapitalize="off"')}
+      ${f('roman', 'Latin spelling (as Georgians type it) *', w.roman, 'autocapitalize="off"')}
       ${f('en', 'English translation * (use / for alternatives)', w.en)}
       <label>Category</label>
       <div class="row wrap" id="catpick" style="margin-bottom:10px">

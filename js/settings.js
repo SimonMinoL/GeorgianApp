@@ -5,6 +5,9 @@ export function render(root) {
   root.innerHTML = `
     <h1>Backup</h1>
     <div class="card">
+      <label><input type="checkbox" id="latin" ${state.showLatin !== false ? 'checked' : ''}> Show Latin spelling under words in easy modes</label>
+    </div>
+    <div class="card">
       <p class="muted" style="margin-bottom:12px">Your data lives only in this browser. Download a backup now and then (and before switching phones).</p>
       <button class="btn block" id="export">Download backup</button>
       <label style="margin-top:16px">Restore from backup file</label>
@@ -15,6 +18,7 @@ export function render(root) {
       <button class="btn danger block" id="reset-stats">Reset statistics only</button>
     </div>`;
 
+  $('#latin', root).onchange = e => { state.showLatin = e.target.checked; save(); };
   $('#export', root).onclick = () => {
     const blob = new Blob([exportJSON()], { type: 'application/json' });
     const a = document.createElement('a');
