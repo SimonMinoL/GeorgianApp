@@ -1,5 +1,6 @@
-import { STARTER_WORDS, DEFAULT_EXAMPLES } from './data.js';
+import { STARTER_WORDS, DEFAULT_EXAMPLES, ALPHABET } from './data.js';
 import { NUMBER_WORDS } from './numbers.js';
+import { FREQ_WORDS } from './frequency.js';
 
 const KEY = 'georgian-cards.v1';
 const VERSION = 2;
@@ -15,6 +16,7 @@ function fresh() {
     progress: {},
     history: {},
     alphabetExamples: { ...DEFAULT_EXAMPLES },
+    overrides: {},
   };
 }
 
@@ -51,6 +53,23 @@ function load() {
 
 export const state = load();
 
+// Edits to built-in items (frequency words, numbers, alphabet) are stored as overrides by id
+// and applied on top of the defaults in code, so they survive updates and are part of the backup.
+const WORD_FIELDS = ['ka', 'roman', 'en', 'category', 'sentence', 'sentenceEn'];
+const builtins = [
+  ...[...FREQ_WORDS, ...NUMBER_WORDS].map(w => [w.id, w, WORD_FIELDS]),
+  ...ALPHABET.map(l => ['a:' + l.char, l, ['sound', 'name']]),
+];
+const originals = new Map(builtins.map(([id, o, fields]) => [id, Object.fromEntries(fields.map(k => [k, o[k]]))]));
+
+export function applyOverrides() {
+  for (const [id, o] of builtins) Object.assign(o, originals.get(id), state.overrides[id]);
+}
+applyOverrides();
+
+export function setOverride(id, data) { state.overrides[id] = data; applyOverrides(); save(); }
+export function clearOverride(id) { delete state.overrides[id]; applyOverrides(); save(); }
+
 export function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
@@ -63,6 +82,7 @@ export function importJSON(text) {
   const data = JSON.parse(text);
   if (!Array.isArray(data.words)) throw new Error('Not a valid backup file');
   Object.assign(state, migrate({ ...fresh(), version: 1, ...data }));
+  applyOverrides();
   save();
 }
 

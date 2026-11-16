@@ -20,25 +20,20 @@ const ALPHA_MODES = [
 ];
 
 const MATH_MODES = [
-  ['math-add-easy', 'Addition (digits)', 'See 3 + 4, type the answer in Georgian'],
-  ['math-sub-easy', 'Subtraction (digits)', 'See 7 − 2, type the answer in Georgian'],
-  ['math-mix-easy', 'Mixed (digits)', 'Addition and subtraction'],
-  ['math-add-hard', 'Addition (Georgian words)', 'Numbers shown in Georgian too'],
-  ['math-sub-hard', 'Subtraction (Georgian words)', 'Numbers shown in Georgian too'],
-  ['math-mix-hard', 'Mixed (Georgian words)', 'Addition and subtraction, all in Georgian'],
+  ['math-digits', 'Digits', 'See 3 + 4 or 7 − 2, type the answer in Georgian'],
+  ['math-words', 'Georgian words', 'Numbers shown in Georgian too'],
 ];
-const MODES = { words: WORD_MODES, numbers: WORD_MODES, alphabet: ALPHA_MODES, math: MATH_MODES };
-const DECKS = [['words', 'Words'], ['numbers', 'Numbers'], ['alphabet', 'Alphabet'], ['math', 'Math']];
+const MODES = { words: WORD_MODES, numbers: WORD_MODES, alphabet: ALPHA_MODES };
+const DECKS = [['words', 'Words'], ['numbers', 'Numbers'], ['alphabet', 'Alphabet']];
 const METHODS = {
   words: [['random', 'Random'], ['smart', 'Smart (Leitner)'], ['frequency', 'Frequency list', 'Most common spoken words first, unlocking as you learn (built-in list)']],
-  numbers: [['order', 'In order', '1, 2, 3… as far as you have unlocked'], ['random', 'Random'], ['smart', 'Smart (Leitner)']],
+  numbers: [['order', 'In order', '1, 2, 3… as far as you have unlocked'], ['random', 'Random'], ['smart', 'Smart (Leitner)'], ['math', 'Math', 'Mixed addition and subtraction, answer in Georgian']],
   alphabet: [['order', 'In order', 'ა, ბ, გ… in alphabet order'], ['random', 'Random'], ['smart', 'Smart (Leitner)']],
-  math: [],
 };
-const DECK_DEFAULT_METHOD = { words: 'random', numbers: 'order', alphabet: 'order', math: 'random' };
+const DECK_DEFAULT_METHOD = { words: 'random', numbers: 'order', alphabet: 'order' };
 const CHOICES = 8;
 
-const METHOD_LABEL = { random: 'Random', smart: 'Smart', frequency: 'Frequency', order: 'In order' };
+const METHOD_LABEL = { random: 'Random', smart: 'Smart', frequency: 'Frequency', order: 'In order', math: 'Math' };
 const setup = { deck: 'words', mode: 'ka-en-easy', method: 'random', cats: new Set() };
 let session = null;
 
@@ -47,25 +42,26 @@ export function render(root) {
 }
 
 const unlocked = () => NUMBER_WORDS.slice(0, unlockedMax(getProgress));
+const isMathSetup = () => setup.deck === 'numbers' && setup.method === 'math';
 
 // ---------- Setup ----------
 function renderSetup(root) {
   const cats = setup.method === 'frequency' ? freqCategories() : categories();
-  const modes = MODES[setup.deck];
   const methods = METHODS[setup.deck];
-  if (!modes.some(m => m[0] === setup.mode)) setup.mode = modes[0][0];
   if (!methods.some(m => m[0] === setup.method)) setup.method = DECK_DEFAULT_METHOD[setup.deck];
+  const modes = isMathSetup() ? MATH_MODES : MODES[setup.deck];
+  if (!modes.some(m => m[0] === setup.mode)) setup.mode = modes[0][0];
 
   root.innerHTML = `
     <h1>Study</h1>
     <div class="row wrap" style="margin-bottom:12px">
       ${DECKS.map(([id, label]) => `<button class="chip ${setup.deck === id ? 'on' : ''}" data-deck="${id}">${label}</button>`).join('')}
     </div>
-    ${setup.deck === 'numbers' || setup.deck === 'math' ? `<p class="muted" style="margin-bottom:8px">Unlocked: 1–${unlocked().length} (the next ten open when you master the current ones)</p>` : ''}
+    ${setup.deck === 'numbers' ? `<p class="muted" style="margin-bottom:8px">Unlocked: 1–${unlocked().length} (the next ten open when you master the current ones)</p>` : ''}
     <h2>Mode</h2>
     ${modes.map(([id, name, desc]) => `<button class="option ${setup.mode === id ? 'on' : ''}" data-mode="${id}">${name}<small>${desc}</small></button>`).join('')}
-    ${methods.length ? `<h2>Method</h2>
-    ${methods.map(([id, name, desc]) => `<button class="option ${setup.method === id ? 'on' : ''}" data-method="${id}">${name}${desc ? `<small>${desc}</small>` : ''}</button>`).join('')}` : ''}
+    <h2>Method</h2>
+    ${methods.map(([id, name, desc]) => `<button class="option ${setup.method === id ? 'on' : ''}" data-method="${id}">${name}${desc ? `<small>${desc}</small>` : ''}</button>`).join('')}
     ${setup.deck === 'words' ? `
       <h2>Categories <span class="muted" style="text-transform:none">(none selected = all)</span></h2>
       <div class="row wrap">${cats.map(c => `<button class="chip ${setup.cats.has(c) ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('') || '<span class="muted">No categories yet</span>'}</div>` : ''}
@@ -80,9 +76,10 @@ function renderSetup(root) {
     renderSetup(root);
   });
   $('#start', root).onclick = () => {
-    const cards = buildCards();
-    if (!cards.length && setup.deck !== 'math') { $('#err', root).textContent = 'No cards match. Add words or change categories.'; return; }
-    session = { cards, method: setup.deck === 'math' ? 'random' : setup.method, deck: setup.deck, mode: setup.mode, right: 0, wrong: 0, last: null, current: null, idx: 0 };
+    const isMath = isMathSetup();
+    const cards = isMath ? [] : buildCards();
+    if (!cards.length && !isMath) { $('#err', root).textContent = 'No cards match. Add words or change categories.'; return; }
+    session = { cards, method: setup.method, deck: isMath ? 'math' : setup.deck, mode: setup.mode, right: 0, wrong: 0, last: null, current: null, idx: 0 };
     next(root);
   };
 }
@@ -101,15 +98,13 @@ function buildCards() {
     return ALPHABET.flatMap(l => dirs.map(dir => ({ key: `a:${l.char}:${dir}`, kind: 'alphabet', dir, letter: l })));
   }
   if (setup.deck === 'numbers') return wordCards(unlocked());
-  if (setup.deck === 'math') return [];
   const source = setup.method === 'frequency' ? FREQ_WORDS : state.words;
   return wordCards(source.filter(w => !setup.cats.size || setup.cats.has(w.category)));
 }
 
 function mathCard(mode) {
   const max = unlocked().length;
-  const [, kind, level] = mode.split('-');
-  const add = kind === 'add' || (kind === 'mix' && Math.random() < 0.5);
+  const add = Math.random() < 0.5;
   let a, b, r;
   if (add) {
     r = 2 + Math.floor(Math.random() * (max - 1));
@@ -120,7 +115,7 @@ function mathCard(mode) {
     b = 1 + Math.floor(Math.random() * (a - 1));
     r = a - b;
   }
-  return { key: `m:${a}${add ? '+' : '-'}${b}`, kind: 'math', a, b, add, answer: NUMBER_WORDS[r - 1], hard: level === 'hard' };
+  return { key: `m:${a}${add ? '+' : '-'}${b}`, kind: 'math', a, b, add, answer: NUMBER_WORDS[r - 1], hard: mode === 'math-words' };
 }
 
 function next(root) {
